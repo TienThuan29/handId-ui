@@ -5,6 +5,7 @@ const GET_USER_INFO_URL = REST_API_BASE + "/api/info/get"
 const REFRESH_TOKEN_URL = REST_API_BASE + "/api/auth/refresh-token"
 const LOGOUT_URL = REST_API_BASE + "/api/auth/logout"
 
+
 const AuthenticationAPI = {
 
     authenticate(authenticationRequest) {
