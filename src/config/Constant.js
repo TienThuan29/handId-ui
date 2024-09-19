@@ -14,3 +14,7 @@ export const ROLE_USER = "USER";
 export const DEFAULT_ENABLE = true;
 
 export const ADMIN_PAGE = "/admin"
+
+
+// constant
+export const DEFAULT_MP4_NAME = 'recorded-video.mp4'

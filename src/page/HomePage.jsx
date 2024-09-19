@@ -3,16 +3,19 @@ import { ACCESS_TOKEN_KEY, ADMIN_PAGE, LOGIN_PAGE, REFRESH_TOKEN_KEY } from "../
 import AuthenticationAPI from "../service/AuthenticationAPI";
 import { useEffect, useState } from "react";
 import VideoRecorderAI from "../components/VideoRecorderAI";
+import StudentAPI from "../service/StudentAPI";
 
 export default function HomePage() {
 
     const navigator = useNavigate();
+
     const [user, setUser] = useState({
         username: '',
         fullname: '',
         role: '',
         phone: ''
     });
+
     const access_token = localStorage.getItem(ACCESS_TOKEN_KEY);
     const refresh_token = localStorage.getItem(REFRESH_TOKEN_KEY);
 
@@ -73,6 +76,21 @@ export default function HomePage() {
         setOption(opt)
     }
 
+    const [studentChecking, setStudentChecking] = useState({isExist: false, message: null});
+    const [roleNumber, setRoleNumber] = useState('');
+
+    const handleInputRoleNumber = (e) => {
+        setRoleNumber(e.target.value)
+    }
+
+    const handleCheckRoleNumber = () => {
+        StudentAPI.checkRoleNumber(roleNumber, localStorage.getItem(ACCESS_TOKEN_KEY)).then(
+            response => {
+                setStudentChecking(response.data.object)
+            }
+        )
+    }
+
     return (
         <div>
 
@@ -127,7 +145,7 @@ export default function HomePage() {
 
                                     <hr />
 
-                                    <VideoRecorderAI />
+                                    <VideoRecorderAI isOpen={true} roleNumber={null} />
 
                                 </div>
                                 :
@@ -140,13 +158,24 @@ export default function HomePage() {
                                     <div className="mb-3">
                                         <label htmlFor="student-role-number" className="form-label">Student Role Number</label>
                                         <div className="d-flex">
-                                            <input style={{ width: '80%' }} type="text" className="form-control" id="student-role-number" aria-describedby="emailHelp" />
-                                            <button type="button" className="btn btn-outline-primary mx-5">Check</button>
+                                            <input style={{ width: '80%' }} type="text" className="form-control" id="student-role-number" 
+                                                    onChange={handleInputRoleNumber}
+                                                    aria-describedby="emailHelp" />
+                                            <button onClick={handleCheckRoleNumber} type="button" className="btn btn-outline-primary mx-5">Check</button>
                                         </div>
                                         <div id="emailHelp" className="form-text">Input correct student role number to register handID!</div>
                                     </div>
 
-                                    <VideoRecorderAI />
+                                    <div className="mt-3 mb-3">
+                                        {
+                                            studentChecking.message != null &&
+                                            <div className={ studentChecking.isExist ? "text-success" : "text-danger" }>
+                                                {studentChecking.message}
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <VideoRecorderAI isOpen={studentChecking.isExist} roleNumber={roleNumber}  />
 
                                 </div>
                         }

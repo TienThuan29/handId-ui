@@ -2,9 +2,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import * as handpose from '@tensorflow-models/handpose';
 import VideoAPI from '../service/VideoAPI';
 import * as tf from '@tensorflow/tfjs';
-import { ACCESS_TOKEN_KEY } from '../config/Constant';
+import { ACCESS_TOKEN_KEY, DEFAULT_MP4_NAME } from '../config/Constant';
 
-const VideoRecorderAI = () => {
+function VideoRecorderAI({ isOpen, roleNumber }) {
 
   const [recording, setRecording] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
@@ -13,6 +13,9 @@ const VideoRecorderAI = () => {
   const mediaRecorderRef = useRef(null);
   const videoRef = useRef(null);
   const handposeModelRef = useRef(null);
+
+  //console.log("Rolenumber: ", roleNumber);
+  
 
   useEffect(() => {
     async function initTF() {
@@ -41,7 +44,7 @@ const VideoRecorderAI = () => {
       }
       else {
         // Reset if hand is not detected
-        setHandDetectionTime(0); 
+        setHandDetectionTime(0);
       }
 
       if (handDetectionTime >= 3000) { // 3 seconds
@@ -57,14 +60,14 @@ const VideoRecorderAI = () => {
     let detectionInterval;
     if (recording) {
       // Check every 100ms
-      detectionInterval = setInterval(detectHand, 100); 
+      detectionInterval = setInterval(detectHand, 100);
     }
     return () => {
       if (detectionInterval) clearInterval(detectionInterval);
     };
   }, [recording, detectHand]);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = useCallback(async (roleNumber) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       videoRef.current.srcObject = stream;
@@ -82,13 +85,13 @@ const VideoRecorderAI = () => {
         // Automatically download video
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'recorded-video.mp4';
+        a.download = DEFAULT_MP4_NAME;
         a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
-        VideoAPI.sendRequestToExtract('recorded-video.mp4', localStorage.getItem(ACCESS_TOKEN_KEY)).then(
+        VideoAPI.sendRequestToExtract(DEFAULT_MP4_NAME, roleNumber, localStorage.getItem(ACCESS_TOKEN_KEY)).then(
           response => {
             console.log(response.data);
           }
@@ -99,7 +102,7 @@ const VideoRecorderAI = () => {
       mediaRecorder.start();
       setRecording(true);
       setHandDetectionTime(0);
-    } 
+    }
     catch (error) {
       console.error('Error accessing media devices:', error);
     }
@@ -109,33 +112,42 @@ const VideoRecorderAI = () => {
     if (videoUrl) {
       const a = document.createElement('a');
       a.href = videoUrl;
-      a.download = 'recorded-video.mp4';
+      a.download = DEFAULT_MP4_NAME;
       a.click();
     }
   };
 
   return (
     <div>
-      <video ref={videoRef} autoPlay muted style={{ width: '100%', maxWidth: '700px' }} />
-      <div>
-        <button className='btn btn-warning mt-3' onClick={startRecording} disabled={recording}>
-          <i className="bi bi-camera-video-fill"></i>&nbsp;&nbsp;&nbsp;
-          {recording ? 'Recording...' : 'Start Recording'}
-        </button>
-        {videoUrl && (
-          <button className='btn btn-success mx-3 mt-3' onClick={downloadVideo}>Download Video</button>
-        )}
-      </div>
-      <p className='text-danger mt-3' style={{ fontSize: 24 }}>
-        {recording
-          ? handDetected
-            ? `Hand detected for ${(handDetectionTime / 1000).toFixed(1)} seconds...`
-            : "Waiting for hand detection..."
-          : videoUrl
-            ? "Recording complete. You can now download the video."
-            : "Press 'Start Recording' to begin."}
-      </p>
+      {
+        isOpen && 
+        <div>
+          <video ref={videoRef} autoPlay muted style={{ width: '100%', maxWidth: '700px' }} />
+          <div>
+            <button className='btn btn-warning mt-3' onClick={() => startRecording(roleNumber)} disabled={recording}>
+              <i className="bi bi-camera-video-fill"></i>&nbsp;&nbsp;&nbsp;
+              {recording ? 'Recording...' : 'Start Recording'}
+            </button>
+            {videoUrl && (
+              <button className='btn btn-success mx-3 mt-3' onClick={downloadVideo}>Download Video</button>
+            )}
+          </div>
+          <p className='text-danger mt-3' style={{ fontSize: 24 }}>
+            {recording
+              ? handDetected
+                ? `Hand detected for ${(handDetectionTime / 1000).toFixed(1)} seconds...`
+                : "Waiting for hand detection..."
+              : videoUrl
+                ? "Recording complete. You can now download the video."
+                : "Press 'Start Recording' to begin."}
+          </p>
+        </div > 
+      }
     </div>
+
+
+
+
   );
 };
 

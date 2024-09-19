@@ -5,13 +5,15 @@ const EXTRACT_VIDEO_API = REST_API_BASE + "/api/video/process"
 
 const VideoAPI = {
 
-    sendRequestToExtract(filename, access_token) {
+    sendRequestToExtract(filename, roleNumber, access_token) {
+        console.log("Role number api: ",roleNumber)
         return axios.post(EXTRACT_VIDEO_API, null, {
             headers: {
                 "Authorization": `Bearer ${access_token}`
             },
             params: {
-                filename
+                filename,
+                roleNumber
             }
         });
     }
