@@ -25,7 +25,7 @@ export default function LoginPage() {
             username, password
         }
 
-        console.log(authRequest);
+        //console.log(authRequest);
 
         if (authRequest.username && authRequest.password) {
             AuthenticationAPI.authenticate(authRequest).then(

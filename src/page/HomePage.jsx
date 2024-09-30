@@ -21,7 +21,7 @@ export default function HomePage() {
 
     useEffect(() => {
 
-        console.log(access_token);
+        // console.log(access_token);
         if (access_token) {
 
             AuthenticationAPI.getInfo(access_token)
@@ -38,7 +38,7 @@ export default function HomePage() {
                             return AuthenticationAPI.getInfo(response.data.access_token);
                         })
                         .then((response) => {
-                            console.log(response.data);
+                            //console.log(response.data);
                             setUser(response.data);
                         })
                         .catch((refreshError) => {

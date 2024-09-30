@@ -1,13 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ACCESS_TOKEN_KEY, LOGIN_PAGE, REFRESH_TOKEN_KEY } from "../config/Constant";
+import AuthenticationAPI from "../service/AuthenticationAPI";
+import StaffAccountTable from "../components/StaffAccountTable";
+import { useNavigate } from "react-router-dom";
+import StudentDataTable from "../components/StudentDataTable";
 
 
 export default function AdminPage() {
 
+  const [user, setUser] = useState({
+    username: '',
+    fullname: '',
+    role: '',
+    phone: ''
+  });
+
   const options = ['staffAcc', 'stuData']
   const [option, setOption] = useState(options[0]);
+  const navigator = useNavigate();
 
   const handleChooseOption = (opt) => {
     setOption(opt)
+  }
+
+  const access_token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const refresh_token = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+  useEffect(() => {
+
+    // console.log(access_token);
+    if (access_token) {
+
+      AuthenticationAPI.getInfo(access_token)
+        .then((response) => {
+          setUser(response.data);
+        })
+        .catch((error) => {
+          console.error("Access token invalid:", error);
+          if (refresh_token) {
+            AuthenticationAPI.refresh(refresh_token).then((response) => {
+              localStorage.setItem(ACCESS_TOKEN_KEY, response.data.access_token);
+              return AuthenticationAPI.getInfo(response.data.access_token);
+            })
+              .then((response) => {
+                // console.log(response.data);
+                setUser(response.data);
+              })
+              .catch((refreshError) => {
+                console.error("Error refreshing token:", refreshError);
+                window.location.reload();
+              });
+          }
+          else {
+            navigator(LOGIN_PAGE)
+          }
+        });
+    }
+    else {
+      navigator(LOGIN_PAGE)
+    }
+  }, []);
+
+
+  const logout = () => {
+    const access_token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    AuthenticationAPI.logout(access_token).then(
+      (response) => {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        
+      }
+    )
+      .catch(
+        (error) => console.log(error)
+      );
+    navigator(LOGIN_PAGE);
   }
 
   return (
@@ -16,10 +83,9 @@ export default function AdminPage() {
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <div className="container-fluid">
           <span className="navbar-brand mb-0 h1">
-            {/* Welcome {user.fullname} */}
-            Welcome, Administration
+            Welcome {user.fullname}
           </span>
-          <button className="btn btn-danger" type="button">Logout</button>
+          <button onClick={logout} className="btn btn-danger" type="button">Logout</button>
           {/* onClick={logout} */}
         </div>
       </nav>
@@ -56,51 +122,7 @@ export default function AdminPage() {
           <div className="col-md-8">
 
             {
-              option === options[0] ?
-                <div>
-
-                  <h2 className="text-center mb-4">Manage Staff Accounts</h2>
-
-                  <hr />
-
-                  <button className="btn btn-success mt-3 mb-4"><i className="bi bi-file-earmark-plus"></i>&nbsp;&nbsp;Add Account</button>
-
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Fullname</th>
-                        <th scope="col">Phone</th>
-                        <th scope="col">Active</th>
-                        <th scope="col">Role</th>
-                        <th scope="col">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <th scope="row">1</th>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td><span className="badge rounded-pill bg-success">Active</span></td>
-                        <td></td>
-                        <td>
-                          <i className="bi bi-pencil-square text-primary"></i>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                </div>
-                :
-                <div>
-
-                  <h2 className="text-center mb-4">Manage Student Data</h2>
-
-                  <hr />
-
-                </div>
+              option === options[0] ? <StaffAccountTable /> : <StudentDataTable />
             }
 
           </div>
